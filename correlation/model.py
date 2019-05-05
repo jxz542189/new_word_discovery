@@ -11,14 +11,15 @@ import numpy as np
 path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 min_proba = {2:5, 3:25, 4:125}
 write_path = os.path.join(path, 'data', 'result.txt')
-min_count = 5
+min_count = 10
 word_max_length = 4
 prog = re.compile('[\s+\.\!\/_,$%^*(+\"\')]+|[+——()?【】“”！，。？、~@#￥%……&*（）0-9a-zA-Z]+')
 
 
-@jit(int32(float32, int32, int32, int32), nopython=True)
+@jit(float32(float32, int32, int32, int32), nopython=True)
 def agglomeration(total, freq, freq_left, freq_right):
     return total * freq / (freq_left * freq_right)
+
 
 class FindNewToken(object):
     def __init__(self, txt_path, word_max_length=word_max_length, write_path=write_path, min_count=min_count,
@@ -143,12 +144,14 @@ class FindNewToken(object):
 
     def write(self):
         with open(self.write_path, 'w', encoding='utf-8') as f:
-            for sent, token in self.pairs:
-                new_token = []
-                for word in token:
-                    if word not in self.word_set:
-                        new_token.append(word)
-                f.write( ','.join(new_token) + "====" + sent  +'\n')
+            new_words = set()
+            for token in self.all_tokens:
+                if token not in self.word_set:
+                    if token not in new_words:
+                        if len(token) >=2 and len(token) < self.word_max_length + 2:
+                            new_words.add(token)
+            for word in new_words:
+                f.write(word + '\n')
 
 
 if __name__ == '__main__':

@@ -21,15 +21,18 @@ from information_entropy.config import basedir
 # @Software: PyCharm
 """
 import os
-import jieba
+import pkuseg
 from information_entropy.model import TrieNode
 from information_entropy.util import get_stopwords, load_dictionary, generate_ngram, save_model, load_model
 from information_entropy.config import basedir
 from string import digits
 import re
+from utils.log_util import Logger
 
-prog = re.compile("[A-Za-z0-9\!\%\[\]\,\。\☆\★]")
+prog = re.compile("[A-Za-z0-9\!\%\[\]\,\。\☆\★\&\-\:１\.\/]")
 remove_digits = str.maketrans('', '', digits)
+seg = pkuseg.pkuseg()           # 以默认配置加载模型
+
 
 def load_data(filename, stopwords):
     """
@@ -42,20 +45,20 @@ def load_data(filename, stopwords):
         for line in f:
             # line = line.translate(remove_digits)
             line = prog.sub("", line)
-            word_list = [x for x in jieba.cut(line.strip(), cut_all=False) if x not in stopwords]
+            word_list = [x for x in seg.cut(line.strip()) if x not in stopwords]
             data.append(word_list)
     return data
 
 
 def load_data_2_root(data):
-    print('------> 插入节点')
+    Logger.log_info.info('------> 插入节点')
     for word_list in data:
         # tmp 表示每一行自由组合后的结果（n gram）
         # tmp: [['它'], ['是'], ['小'], ['狗'], ['它', '是'], ['是', '小'], ['小', '狗'], ['它', '是', '小'], ['是', '小', '狗']]
         ngrams = generate_ngram(word_list, 3)
         for d in ngrams:
             root.add(d)
-    print('------> 插入成功')
+    Logger.log_info.info('------> 插入成功')
 
 
 if __name__ == "__main__":
